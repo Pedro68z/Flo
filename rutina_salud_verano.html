@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rutina Saludable Verano</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 0;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #333;
+    }
+    .container {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin: 20px;
+    }
+    .calendar {
+      width: 60%;
+      max-width: 700px;
+    }
+    .schedule {
+      width: 30%;
+      min-width: 250px;
+      background-color: #e6f2ff;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .day {
+      display: inline-block;
+      width: 12%;
+      margin: 5px;
+      padding: 10px;
+      background-color: #d9f9d9;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.2s;
+    }
+    .day:hover {
+      background-color: #a5d6a7;
+      transform: scale(1.05);
+    }
+    .rest {
+      background-color: #ffd6d6;
+    }
+    .completed {
+      background-color: #b2dfdb !important;
+      text-decoration: line-through;
+    }
+    #infoModal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      width: 80%;
+      max-width: 600px;
+      z-index: 1000;
+    }
+    #infoModal h3 {
+      margin-top: 0;
+    }
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.4);
+      z-index: 999;
+    }
+    .closeBtn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 20px;
+      cursor: pointer;
+      color: #666;
+    }
+    .closeBtn:hover {
+      color: #000;
+    }
+    .doneBtn {
+      margin-top: 15px;
+      display: block;
+      padding: 8px 15px;
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .doneBtn:hover {
+      background-color: #388e3c;
+    }
+  </style>
+</head>
+<body>
+  <h1>Calendario de Rutina Saludable</h1>
+  <div class="container">
+    <div class="calendar">
+      <h2>Julio</h2>
+      <div id="july"></div>
+      <h2>Agosto</h2>
+      <div id="august"></div>
+    </div>
+    <div class="schedule">
+      <h2>Horario Diario</h2>
+      <ul>
+        <li>08:00 - Despertar</li>
+        <li>08:30 - Desayuno</li>
+        <li>11:00 - Snack opcional</li>
+        <li>14:00 - Comida</li>
+        <li>17:30 - Merienda</li>
+        <li>21:00 - Cena</li>
+        <li>23:00 - Prepararse para dormir</li>
+        <li>23:30 - Dormir</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="overlay"></div>
+  <div id="infoModal">
+    <span class="closeBtn" onclick="closeModal()">&times;</span>
+    <div id="infoBox"></div>
+  </div>
+
+  <script>
+    const daysInfo = {
+      "entrenamiento": "<strong>Día de ejercicio:</strong><br>Sentadillas, caminata ligera y estiramientos. Duración: 20–30 minutos.<br><br><strong>Dieta:</strong><ul><li>Desayuno: Plátano + leche + tostada con aguacate</li><li>Comida: Arroz con carne picada + ensalada suave</li><li>Merienda: Yogur con avena</li><li>Cena: Huevos revueltos con jamón + fruta</li></ul>",
+      "descanso": "<strong>Día de descanso</strong><br><br><strong>Dieta:</strong><ul><li>Desayuno: Zumo + nueces + pan con aceite</li><li>Comida: Pasta con tomate y queso</li><li>Merienda: Batido de plátano</li><li>Cena: Bocadillo de pollo + fruta</li></ul>"
+    };
+
+    const weekDays = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+    const julyDays = document.getElementById("july");
+    const augustDays = document.getElementById("august");
+    const infoBox = document.getElementById("infoBox");
+    const overlay = document.getElementById("overlay");
+    const infoModal = document.getElementById("infoModal");
+
+    let currentDayElement = null;
+
+    function createDay(dayNum, isWorkout, weekday) {
+      const day = document.createElement("div");
+      day.className = "day";
+      if (!isWorkout) day.classList.add("rest");
+      day.innerHTML = `<strong>${weekday}</strong><br>${dayNum}`;
+      day.onclick = () => {
+        currentDayElement = day;
+        infoBox.innerHTML = `<h3>${weekday} ${dayNum}</h3>${isWorkout ? daysInfo.entrenamiento : daysInfo.descanso}<button class='doneBtn' onclick='markAsDone()'>Marcar como hecho</button>`;
+        overlay.style.display = "block";
+        infoModal.style.display = "block";
+      };
+      return day;
+    }
+
+    function markAsDone() {
+      if (currentDayElement) {
+        currentDayElement.classList.add("completed");
+      }
+      closeModal();
+    }
+
+    function closeModal() {
+      overlay.style.display = "none";
+      infoModal.style.display = "none";
+    }
+
+    function fillMonth(container, startDayOffset) {
+      for (let i = 1; i <= 31; i++) {
+        if (container.id === "july" && i < 7) continue; // Omitir 1 al 6 julio
+
+        const weekdayIndex = (startDayOffset + i - 1) % 7;
+        const weekday = weekDays[weekdayIndex];
+
+        let isWorkout = false;
+        if (weekdayIndex >= 0 && weekdayIndex <= 3) isWorkout = true;
+
+        container.appendChild(createDay(i, isWorkout, weekday));
+      }
+    }
+
+    fillMonth(julyDays, 0);
+    fillMonth(augustDays, 3);
+  </script>
+</body>
+</html>
